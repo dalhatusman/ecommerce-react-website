@@ -1,7 +1,8 @@
-import { createContext, useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { set } from "react-hook-form";
 
-export const AuthContext = createContext(null)
+const AuthContext = createContext(null)
+
 export const AuthProvider = ({children}) => {
     const [user, setUser] = useState(localStorage.getItem("currentUserEmail") ? {email: localStorage.getItem("currentUserEmail")} : null );
 
@@ -20,8 +21,19 @@ export const AuthProvider = ({children}) => {
         return { success:true };
     }
 
-    function login () {
+    function login (email, password) {
+        const users = JSON.parse(localStorage.getItem("users") || "[]");
+        const user = users.find((u) => u.email === email && u.password === password);
 
+        if(!user){
+            return {success: false, error: "Incorrect email or password"};
+            setUser({email});
+        }
+
+        localStorage.setItem("currentUserEmail", email);
+        setUser({email});
+
+        return { success: true };
     }
 
     function logout () {
@@ -30,8 +42,13 @@ export const AuthProvider = ({children}) => {
     }
 
     return(
-        <AuthContext.Provider value={{ signUp, user, logout }}>
+        <AuthContext.Provider value={{ signUp, user, logout,login }}>
             {children}
         </AuthContext.Provider>
     )
+}
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    return context;
 }
